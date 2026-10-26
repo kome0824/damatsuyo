@@ -375,11 +375,10 @@
   let devInvOn = DEV_OK && !!load('os2_dev_inv', false);
   const maxTier = () => Math.min(rec.tierCleared + 1, OS.TIERS.length);
   const curTier = () => Math.max(0, Math.min(ui.tier || 0, maxTier()));
-  // GoatCounter のイベント記録（どこまで遊ばれたかを見るため）。自動プレイ・開発用の表示・自分の端末では数えない
   let gcRuns = 0;
   function gcEvent(path, title) {
     if (bot || DEV_OK) return;
-    try { if (localStorage.getItem('skipgc') === 't') return; } catch (e) {} // #toggle-goatcounter で自分の端末を除外しているとき
+    try { if (localStorage.getItem('skipgc') === 't') return; } catch (e) {}
     try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path, title, event: true }); } catch (e) {}
   }
   function newRun() {
