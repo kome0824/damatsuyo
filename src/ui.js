@@ -420,7 +420,7 @@
     if (padEl && getComputedStyle(padEl).display !== 'none') { if (!padEl.classList.contains('acts-on') || !padStickH) padStickH = padEl.offsetHeight; } else padStickH = 0;
     document.documentElement.style.setProperty('--padh', padStickH + 'px');
     const cs = getComputedStyle(wrapEl), gap = parseFloat(cs.rowGap) || 0;
-    const parts = ['header', '#hud', '#hMsg', '#owned', '#pad'].map(q => wrapEl.querySelector(q)).filter(el => el && getComputedStyle(el).display !== 'none' && getComputedStyle(el).position !== 'fixed');
+    const parts = ['header', '#hud', '#hMsg', '#owned', '#pad'].map(q => wrapEl.querySelector(q)).filter(el => el && el.parentElement === wrapEl && getComputedStyle(el).display !== 'none' && getComputedStyle(el).position !== 'fixed');
     const used = parts.reduce((s, el) => s + el.offsetHeight, 0) + gap * parts.length + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) + 4;
     const side = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
     wrapEl.style.maxWidth = Math.round(Math.max(260, Math.min(1000, window.innerHeight - used)) + side) + 'px';
@@ -428,6 +428,13 @@
     if (G && G.run) updOwned();
   }
   addEventListener('resize', fitStage);
+  const msgEl0 = document.getElementById('hMsg');
+  function placeMsg() {
+    if (portrait.matches) { if (msgEl0.parentNode !== stageEl) stageEl.appendChild(msgEl0); }
+    else if (msgEl0.parentNode === stageEl) stageEl.after(msgEl0);
+  }
+  placeMsg();
+  if (portrait.addEventListener) portrait.addEventListener('change', () => { placeMsg(); fitStage(); });
   function showOv(html, focus, cls) { ov.classList.toggle('title-ov', cls === 'title-card'); ov.innerHTML = `<div class="card ${cls || ''}">${html}</div>`; ov.hidden = false; ov.scrollTop = 0; const fe = document.activeElement; if (fe && fe !== document.body) try { fe.blur(); } catch (e) {} }
   function hideOv() { ov.hidden = true; ov.innerHTML = ''; }
   const hearts = (h, m) => `<span class="hearts" aria-label="体力 ${h} / ${m}">${'♥'.repeat(Math.max(0, h))}<i>${'♥'.repeat(Math.max(0, m - h))}</i></span>`;
@@ -672,7 +679,7 @@
     const pb = document.getElementById('pb'); pb.hidden = false;
     if (G.run.veto <= 0 || pick.cands.length < 2 || pick.extra) { pb.classList.add('one'); const v = pb.querySelector('.veto'); if (v) v.remove(); }
     movePadActs('#pb');
-    ov.scrollTop = ov.scrollHeight;
+    if (!padEl0.classList.contains('acts-on')) ov.scrollTop = ov.scrollHeight;
     if (bot) autoT = 0.9;
   }
   function vetoPick() {
