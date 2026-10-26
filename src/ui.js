@@ -375,6 +375,12 @@
   let devInvOn = DEV_OK && !!load('os2_dev_inv', false);
   const maxTier = () => Math.min(rec.tierCleared + 1, OS.TIERS.length);
   const curTier = () => Math.max(0, Math.min(ui.tier || 0, maxTier()));
+  // GoatCounter のイベント記録（どこまで遊ばれたかを見るため）。自動プレイと開発用の表示では数えない
+  let gcRuns = 0;
+  function gcEvent(path, title) {
+    if (bot || DEV_OK) return;
+    try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path, title, event: true }); } catch (e) {}
+  }
   function newRun() {
     endDemo = null;
     cfg = OS.applyTier(OS.loadConfig(load(CFG_KEY, null)), curTier());
@@ -385,6 +391,7 @@
     fx = []; trail = []; banner = null; toast = null; hint = null; hurtFlash = 0; achQueue = [];
     rec.runs++; runAch = []; milestoneNow = null; store('os2_rec', rec); Sfx.musicRewind(); checkAch('start');
     G.newRun(); setState('play'); hideOv(); updOwned();
+    gcRuns++; gcEvent(gcRuns === 1 ? 'damatsuyo-start' : 'damatsuyo-retry', gcRuns === 1 ? 'ダマツヨ：遊び始めた' : 'ダマツヨ：もう一回遊んだ');
   }
   function pause() {
     if (uiState !== 'play' || !G.w || G.w.over) return;
@@ -963,6 +970,7 @@
     if (run.endless && run.round > rec.endlessBest.round) rec.endlessBest = { round: run.round, kills: run.kills };
     rec.totalKills = (rec.totalKills || 0) + run.kills - (run.killsCounted || 0); run.killsCounted = run.kills;
     checkAch('end', { win });
+    gcEvent('damatsuyo-result', 'ダマツヨ：結果画面まで遊んだ'); if (win && !run.endless) gcEvent('damatsuyo-clear', 'ダマツヨ：フェーズ10を乗りきった');
     const lockedAfter = OS.lockedUpgrades(rec);
     newUps = lockedBefore.filter(k => !lockedAfter.includes(k));
     store('os2_rec', rec);
@@ -1033,6 +1041,7 @@
     return cardWait;
   }
   async function xPost() {
+    gcEvent('damatsuyo-xpost', 'ダマツヨ：Xに投稿を押した');
     const c = shareCard || await makeCard();
     if (PHONE && c) {
       try { if (navigator.canShare && navigator.canShare({ files: [c.file] })) { await navigator.share({ files: [c.file], text: resultText(G.phase === 'win') }); return; } }
