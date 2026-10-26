@@ -268,7 +268,18 @@
   const padEl0 = document.getElementById('pad'), padActs = document.createElement('div');
   padActs.className = 'pad-acts'; padEl0.appendChild(padActs);
   const sideActs = document.getElementById('sideActs');
-  [padActs, sideActs].forEach(el => el.addEventListener('click', e => { const b = e.target.closest('[data-act]'); if (b) act(b.dataset.act, b); }));
+  let tapAct = null, tapIgnoreUntil = 0;
+  [padActs, sideActs].forEach(el => {
+    el.addEventListener('pointerdown', e => { const b = e.target.closest('[data-act]'); tapAct = b && e.pointerType !== 'mouse' ? { b, x: e.clientX, y: e.clientY } : null; });
+    el.addEventListener('pointercancel', () => { tapAct = null; });
+    el.addEventListener('pointerup', e => {
+      const t = tapAct; tapAct = null;
+      if (!t || Math.hypot(e.clientX - t.x, e.clientY - t.y) > 12 || e.target.closest('[data-act]') !== t.b) return;
+      tapIgnoreUntil = performance.now() + 700; act(t.b.dataset.act, t.b);
+    });
+    el.addEventListener('click', e => { const b = e.target.closest('[data-act]'); if (b) act(b.dataset.act, b); });
+  });
+  document.addEventListener('click', e => { if (performance.now() < tapIgnoreUntil) { e.stopPropagation(); e.preventDefault(); } }, true);
   const portrait = matchMedia('(pointer: coarse) and (orientation: portrait)'), landscape = matchMedia('(pointer: coarse) and (orientation: landscape)');
   let padFrom = null;
   function placeActs() {
